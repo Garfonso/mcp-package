@@ -219,7 +219,7 @@ client calls it and its result is verified:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 1.1.0 (2026-09-11)
 * (@GermanBluefox) Every tool now declares all four MCP behaviour hints (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) and a human-readable title, so hosts can warn before a writing tool is invoked
 * (@GermanBluefox) `system_info`, `list_instances` and `list_hosts` declare an explicit (empty) input schema
 * (@GermanBluefox) The embedded in-process client now exposes the `title` and `annotations` of every tool
