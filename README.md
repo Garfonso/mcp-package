@@ -165,6 +165,11 @@ state (tracked via the `Mcp-Session-Id` header). Point your MCP client at:
 All object/state access runs with the permissions of the configured **Default User**. The write tools are only
 registered when their respective permission option is enabled.
 
+Every tool declares a JSON input schema and all four MCP behaviour hints (`readOnlyHint`, `destructiveHint`,
+`idempotentHint`, `openWorldHint`), so a host can tell what a tool does before calling it and can ask the user
+for confirmation before a writing tool runs. All reading tools are `readOnlyHint: true`; `ping_host` is the only
+tool with `openWorldHint: true`, because it talks to hosts outside of ioBroker.
+
 ### Resources & live updates (SSE)
 
 States and objects are also exposed as MCP **resources** using the canonical ioBroker URI scheme, so clients
@@ -192,11 +197,35 @@ tools rather than as subscribable resources.)
 - `GET /status` - Server status, uptime and active session count
 - `GET /api/info` - Adapter information
 
+## Development
+
+```bash
+npm run build   # compile src/ to build/
+npm run lint
+npm test        # builds, then runs the unit tests in test/
+```
+
+The unit tests drive the server through a real MCP client over an in-memory transport
+(`createInProcessMcp`) on top of a mock ioBroker adapter, so every declared tool is called the way an MCP
+client calls it and its result is verified:
+
+- `test/toolMetadata.test.js` guards the advertised contract - the exact set of tools, a title, a description,
+  an input schema and the four behaviour hints on every one of them, and the permission gating.
+- `test/tools.test.js` exercises the behaviour of each tool (including the error paths and the input
+  validation) against `test/mockAdapter.js`.
+
 ## Changelog
 <!--
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) Every tool now declares all four MCP behaviour hints (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) and a human-readable title, so hosts can warn before a writing tool is invoked
+* (@GermanBluefox) `system_info`, `list_instances` and `list_hosts` declare an explicit (empty) input schema
+* (@GermanBluefox) The embedded in-process client now exposes the `title` and `annotations` of every tool
+* (@GermanBluefox) Fixed the JSDoc of the embedded `allowSetState` option: state writing is opt-out (default true), not opt-in
+* (@GermanBluefox) Added unit tests that call every declared tool over a real MCP client/server pair
+
 ### 1.0.3 (2026-09-03)
 * (@GermanBluefox) `read_file` reads large files in chunks: new optional `offset`/`length` parameters, at most 512 KiB per call by default; the result now contains `size`, `offset`, `length`, `truncated` and `nextOffset` (MCP clients reject tool results above 1 MB, ioBroker/ioBroker.mcp#63)
 

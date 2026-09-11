@@ -266,8 +266,8 @@ export default class McpServer {
      * @param options.adapter The host adapter into which the MCP server is embedded. Used for receiving state/object changes and logs, and for performing actions with the host adapter's permissions.
      * @param options.defaultUser Default user
      * @param options.language Language
-     * @param options.allowSetState Is the state creation available
-     * @param options.allowObjectChange If the object change available
+     * @param options.allowSetState Allow the state-writing tools `set_state`/`set_states` (opt-out, default true)
+     * @param options.allowObjectChange Allow the object/file-changing tools (opt-in, default false)
      */
     static createEmbedded(options: {
         adapter: ioBroker.Adapter;
@@ -790,6 +790,8 @@ export default class McpServer {
         server.registerTool(
             'get_states',
             {
+                title: 'Get state values',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description:
                     'Retrieve the current value of one or multiple states. IDs may contain wildcards, ' +
                     'e.g. "hue.0.*.brightness" expands to all matching states.',
@@ -808,6 +810,13 @@ export default class McpServer {
             server.registerTool(
                 'set_state',
                 {
+                    title: 'Set a state value',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description:
                         'Set the value of a state. The value is coerced to the state type (boolean/number/string).',
                     inputSchema: {
@@ -831,6 +840,13 @@ export default class McpServer {
             server.registerTool(
                 'set_states',
                 {
+                    title: 'Set multiple state values',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description:
                         'Set multiple states in one call (e.g. for scenes or group actions like "all lights off"). ' +
                         'Each value is coerced to its state type. Failures of single states do not abort the rest.',
@@ -859,6 +875,8 @@ export default class McpServer {
         server.registerTool(
             'get_logs',
             {
+                title: 'Read the ioBroker log',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description:
                     'Retrieve recent ioBroker log lines from the host log file. Each entry has {ts, level, ' +
                     'source, message}. Optionally filter by `level` (error/warn/info/debug), by `adapter` ' +
@@ -883,6 +901,8 @@ export default class McpServer {
         server.registerTool(
             'ping_host',
             {
+                title: 'Ping a network host',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
                 description:
                     'Check whether a network device is reachable — useful to diagnose adapter connection ' +
                     'errors (e.g. a "connect ETIMEDOUT 192.168.10.5:2001"). Runs an ICMP ping to `host` and, ' +
@@ -908,17 +928,28 @@ export default class McpServer {
             },
         );
 
-        server.registerTool('system_info', { description: 'Get system and js-controller information' }, async () => {
-            try {
-                return ok({ ok: true, data: await this.getSystemInfo() });
-            } catch (e) {
-                return fail(e);
-            }
-        });
+        server.registerTool(
+            'system_info',
+            {
+                title: 'System information',
+                inputSchema: {},
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+                description: 'Get system and js-controller information',
+            },
+            async () => {
+                try {
+                    return ok({ ok: true, data: await this.getSystemInfo() });
+                } catch (e) {
+                    return fail(e);
+                }
+            },
+        );
 
         server.registerTool(
             'search_objects',
             {
+                title: 'Search objects and states',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description:
                     'Search objects and states by keyword (matched against ID and name) with optional ' +
                     'filters for object type, role, room and source adapter instance',
@@ -946,6 +977,8 @@ export default class McpServer {
         server.registerTool(
             'list_devices',
             {
+                title: 'List devices by room',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description:
                     'List detected devices grouped by room. Uses the ioBroker type-detector to turn ' +
                     'raw states/channels/devices into functional devices with named controls.',
@@ -969,6 +1002,8 @@ export default class McpServer {
         server.registerTool(
             'history_query',
             {
+                title: 'Query the history of a state',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description: 'Query historical values of a state (requires a history adapter)',
                 inputSchema: {
                     id: z.string(),
@@ -1015,7 +1050,12 @@ export default class McpServer {
 
         server.registerTool(
             'list_instances',
-            { description: 'List all adapter instances with their status' },
+            {
+                title: 'List adapter instances',
+                inputSchema: {},
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+                description: 'List all adapter instances with their status',
+            },
             async () => {
                 try {
                     return ok({ ok: true, data: { instances: await this.listInstances() } });
@@ -1025,17 +1065,28 @@ export default class McpServer {
             },
         );
 
-        server.registerTool('list_hosts', { description: 'List all ioBroker hosts with their status' }, async () => {
-            try {
-                return ok({ ok: true, data: { hosts: await this.listHosts() } });
-            } catch (e) {
-                return fail(e);
-            }
-        });
+        server.registerTool(
+            'list_hosts',
+            {
+                title: 'List ioBroker hosts',
+                inputSchema: {},
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+                description: 'List all ioBroker hosts with their status',
+            },
+            async () => {
+                try {
+                    return ok({ ok: true, data: { hosts: await this.listHosts() } });
+                } catch (e) {
+                    return fail(e);
+                }
+            },
+        );
 
         server.registerTool(
             'list_adapters',
             {
+                title: 'List installed adapters',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description:
                     'List all installed adapters with metadata (version, title, description, keywords). ' +
                     'Unlike list_instances this lists what is installed, not what is running.',
@@ -1058,6 +1109,8 @@ export default class McpServer {
         server.registerTool(
             'search_adapter_repository',
             {
+                title: 'Search the adapter repository',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description:
                     'Search the ioBroker adapter REPOSITORY (all installable adapters, not just the ' +
                     'installed ones) by keyword, matched against the adapter name, title, description and ' +
@@ -1086,14 +1139,20 @@ export default class McpServer {
             },
         );
 
-        const enumInput = {
-            language: z.enum(LANGUAGES).optional().describe('Language for names (defaults to the adapter language)'),
-            withIcons: z.boolean().optional().describe('Include the icons of the enum and its members'),
-        };
-
         server.registerTool(
             'list_rooms',
-            { description: 'List all rooms (enum.rooms.*) with their members and metadata', inputSchema: enumInput },
+            {
+                title: 'List rooms',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+                description: 'List all rooms (enum.rooms.*) with their members and metadata',
+                inputSchema: {
+                    language: z
+                        .enum(LANGUAGES)
+                        .optional()
+                        .describe('Language for names (defaults to the adapter language)'),
+                    withIcons: z.boolean().optional().describe('Include the icons of the enum and its members'),
+                },
+            },
             async ({ language, withIcons }) => {
                 try {
                     return ok({ ok: true, data: { rooms: await this.readEnums('rooms', language, withIcons) } });
@@ -1106,8 +1165,16 @@ export default class McpServer {
         server.registerTool(
             'list_functions',
             {
+                title: 'List functions',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description: 'List all functions (enum.functions.*) with their members and metadata',
-                inputSchema: enumInput,
+                inputSchema: {
+                    language: z
+                        .enum(LANGUAGES)
+                        .optional()
+                        .describe('Language for names (defaults to the adapter language)'),
+                    withIcons: z.boolean().optional().describe('Include the icons of the enum and its members'),
+                },
             },
             async ({ language, withIcons }) => {
                 try {
@@ -1124,6 +1191,8 @@ export default class McpServer {
         server.registerTool(
             'get_object',
             {
+                title: 'Read an object',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description: 'Read a single ioBroker object by its ID',
                 inputSchema: { id: z.string().describe('Object ID, e.g. system.adapter.admin.0 or hm-rpc.0.ABC') },
             },
@@ -1140,6 +1209,8 @@ export default class McpServer {
         server.registerTool(
             'read_file',
             {
+                title: 'Read a file',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description:
                     'Read a file from an adapter file storage, e.g. "vis-2.0/main/vis-views.json". ' +
                     `At most \`length\` bytes (default ${DEFAULT_MAX_READ_BYTES}) are returned per call; ` +
@@ -1175,6 +1246,8 @@ export default class McpServer {
         server.registerTool(
             'list_files',
             {
+                title: 'List a directory',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description: 'List a directory in an adapter file storage, e.g. "vis-2.0/main" or "0_userdata.0"',
                 inputSchema: { path: z.string().describe('Path as "<adapter>[/<dir>]"') },
             },
@@ -1190,6 +1263,8 @@ export default class McpServer {
         server.registerTool(
             'file_exists',
             {
+                title: 'Check whether a file exists',
+                annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
                 description: 'Check whether a file exists in an adapter file storage',
                 inputSchema: { path: z.string().describe('Path as "<adapter>/<dir>/<file>"') },
             },
@@ -1210,6 +1285,13 @@ export default class McpServer {
         server.registerTool(
             'write_log',
             {
+                title: 'Write a log message',
+                annotations: {
+                    readOnlyHint: false,
+                    destructiveHint: false,
+                    idempotentHint: false,
+                    openWorldHint: false,
+                },
                 description: 'Write a message to the ioBroker log',
                 inputSchema: {
                     message: z.string(),
@@ -1231,6 +1313,13 @@ export default class McpServer {
             server.registerTool(
                 'set_object',
                 {
+                    title: 'Create or update an object',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description:
                         'Create or update an ioBroker object. An existing object is updated by merging the ' +
                         'provided common/native; a missing one is created from the provided object.',
@@ -1254,6 +1343,13 @@ export default class McpServer {
             server.registerTool(
                 'delete_object',
                 {
+                    title: 'Delete an object',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description:
                         'Delete an ioBroker object (and optionally all its children). ' +
                         'Be careful: deleting objects that were not created by the user can break adapters.',
@@ -1275,6 +1371,13 @@ export default class McpServer {
             server.registerTool(
                 'create_state',
                 {
+                    title: 'Create a state',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: false,
+                        idempotentHint: false,
+                        openWorldHint: false,
+                    },
                     description:
                         'Create a new state object (e.g. under "0_userdata.0."). Fails if the object already ' +
                         'exists - use set_object to modify existing objects.',
@@ -1308,6 +1411,13 @@ export default class McpServer {
             server.registerTool(
                 'create_scene',
                 {
+                    title: 'Create or update a scene',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description:
                         'Create or update a scene for the ioBroker "scenes" adapter: a named collection of ' +
                         'state/value pairs applied together (e.g. "movie night" dims lights and closes blinds). ' +
@@ -1338,6 +1448,13 @@ export default class McpServer {
             server.registerTool(
                 'write_file',
                 {
+                    title: 'Write a file',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description: 'Write a file to an adapter file storage, e.g. "vis-2.0/main/vis-views.json"',
                     inputSchema: {
                         path: z.string().describe('Path as "<adapter>/<dir>/<file>"'),
@@ -1358,6 +1475,13 @@ export default class McpServer {
             server.registerTool(
                 'delete_file',
                 {
+                    title: 'Delete a file',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description: 'Delete a file from an adapter file storage',
                     inputSchema: { path: z.string().describe('Path as "<adapter>/<dir>/<file>"') },
                 },
@@ -1375,6 +1499,13 @@ export default class McpServer {
             server.registerTool(
                 'rename_file',
                 {
+                    title: 'Rename or move a file',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: true,
+                        idempotentHint: false,
+                        openWorldHint: false,
+                    },
                     description:
                         'Rename or move a file/directory within the same adapter file storage, ' +
                         'e.g. "vis-2.0/main/a.json" -> "vis-2.0/backup/a.json"',
@@ -1396,6 +1527,13 @@ export default class McpServer {
             server.registerTool(
                 'mkdir',
                 {
+                    title: 'Create a directory',
+                    annotations: {
+                        readOnlyHint: false,
+                        destructiveHint: false,
+                        idempotentHint: true,
+                        openWorldHint: false,
+                    },
                     description: 'Create a directory in an adapter file storage, e.g. "0_userdata.0/my-folder"',
                     inputSchema: { path: z.string().describe('Path as "<adapter>/<dir>"') },
                 },
@@ -2566,4 +2704,10 @@ export default class McpServer {
 
 export { McpServer, createInProcessMcp };
 export type { McpConfig } from './types';
-export type { InProcessMcp, InProcessMcpOptions, InProcessToolInfo, InProcessToolResult } from './inProcessClient';
+export type {
+    InProcessMcp,
+    InProcessMcpOptions,
+    InProcessToolAnnotations,
+    InProcessToolInfo,
+    InProcessToolResult,
+} from './inProcessClient';

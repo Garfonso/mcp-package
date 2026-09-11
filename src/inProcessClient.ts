@@ -11,6 +11,20 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import McpServer from './index';
 
+/** MCP tool behaviour hints, in a plain (SDK-free) shape. */
+export interface InProcessToolAnnotations {
+    /** Human-readable display name. */
+    title?: string;
+    /** The tool only reads; it never changes its environment. */
+    readOnlyHint?: boolean;
+    /** The tool may overwrite or remove existing data (only meaningful when `readOnlyHint` is false). */
+    destructiveHint?: boolean;
+    /** Calling the tool again with the same arguments has no additional effect. */
+    idempotentHint?: boolean;
+    /** The tool talks to entities outside of ioBroker (e.g. the network). */
+    openWorldHint?: boolean;
+}
+
 /** A tool exposed by the in-process MCP server, in a plain (SDK-free) shape. */
 export interface InProcessToolInfo {
     /** Tool name, e.g. `list_devices`. */
@@ -19,6 +33,13 @@ export interface InProcessToolInfo {
     description?: string;
     /** JSON Schema (object schema) describing the tool's input arguments. */
     inputSchema: Record<string, unknown>;
+    /** Human-readable display name, e.g. `List devices by room`. */
+    title?: string;
+    /**
+     * Behaviour hints the server declares for this tool. Embedders can use them to decide whether a
+     * tool needs a confirmation before it is called (`readOnlyHint: false` / `destructiveHint: true`).
+     */
+    annotations?: InProcessToolAnnotations;
 }
 
 /** Result of a tool call: the concatenated text content plus the error flag. */
@@ -37,7 +58,12 @@ export interface InProcessMcpOptions {
     defaultUser?: `system.user.${string}`;
     /** Language for localized output (rooms/devices/functions). */
     language?: ioBroker.Languages;
-    /** Allow the state-writing tools `set_state`/`set_states` (default: false). */
+    /**
+     * Allow the state-writing tools `set_state`/`set_states` (default: **true**).
+     *
+     * Writing states is what makes the server useful for controlling a smart home, so it is opt-out:
+     * pass `false` explicitly to expose the reading tools only.
+     */
     allowSetState?: boolean;
     /** Allow the object/file-changing tools (`create_state`, `set_object`, ...) (default: false). */
     allowObjectChange?: boolean;
@@ -98,6 +124,8 @@ export async function createInProcessMcp(options: InProcessMcpOptions): Promise<
                 name: tool.name,
                 description: tool.description,
                 inputSchema: (tool.inputSchema as Record<string, unknown>) || { type: 'object', properties: {} },
+                title: tool.title,
+                annotations: tool.annotations,
             }));
         },
         async callTool(name: string, args?: Record<string, unknown>): Promise<InProcessToolResult> {

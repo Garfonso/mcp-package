@@ -31,11 +31,38 @@ jobs:
           node-version: '24.x'
           lint: true
 
+  # Runs the unit tests (MCP tool contract + behaviour) on all supported Node.js versions
+  unit-tests:
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    needs: [check-and-lint]
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22.x, 24.x]
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
   deploy:
     permissions:
       contents: write
       id-token: write
-    needs: [check-and-lint]
+    needs: [check-and-lint, unit-tests]
 
     if: |
       contains(github.event.head_commit.message, '[skip ci]') == false &&
