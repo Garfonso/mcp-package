@@ -225,7 +225,7 @@ client calls it and its result is verified:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 1.1.3 (2026-09-15)
 * (@GermanBluefox) Requests with an unknown `Mcp-Session-Id` (e.g. after a restart) are answered with `404 Not Found` instead of `400`, so MCP clients start a new session as required by the Streamable HTTP specification
 
 ### 1.1.2 (2026-09-15)
