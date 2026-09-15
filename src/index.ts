@@ -194,6 +194,8 @@ export default class McpServer {
             language?: ioBroker.Languages;
             /** Explicit override for the `set_state`/`set_states` permission (embedded mode). */
             allowSetState?: boolean;
+            /** Explicit override for the destructive hint of `set_state`/`set_states` (embedded mode). */
+            setStateDestructive?: boolean;
             /** Explicit override for the object/file-changing tool permission (embedded mode). */
             allowObjectChange?: boolean;
         },
@@ -228,9 +230,14 @@ export default class McpServer {
         if (webSettings.allowObjectChange !== undefined) {
             this.config.allowObjectChange = webSettings.allowObjectChange;
         }
+        if (webSettings.setStateDestructive !== undefined) {
+            this.config.setStateDestructive = webSettings.setStateDestructive;
+        }
         // Permission toggles: state writes are allowed by default, object/file changes are not.
         this.config.allowSetState = this.config.allowSetState !== false;
         this.config.allowObjectChange = this.config.allowObjectChange === true;
+        // State writes are declared destructive unless turned off explicitly
+        this.config.setStateDestructive = this.config.setStateDestructive !== false;
 
         // Authentication is enforced by us only when we run standalone (we own the Express app) and
         // the user turned it on. As a web extension (`this.extension`) the host `web` adapter already
@@ -285,6 +292,7 @@ export default class McpServer {
      * @param options.language Language
      * @param options.allowSetState Allow the state-writing tools `set_state`/`set_states` (opt-out, default true)
      * @param options.allowObjectChange Allow the object/file-changing tools (opt-in, default false)
+     * @param options.setStateDestructive Declare `set_state`/`set_states` as destructive (default true)
      */
     static createEmbedded(options: {
         adapter: ioBroker.Adapter;
@@ -292,6 +300,7 @@ export default class McpServer {
         language?: ioBroker.Languages;
         allowSetState?: boolean;
         allowObjectChange?: boolean;
+        setStateDestructive?: boolean;
     }): McpServer {
         return new McpServer(
             null,
@@ -302,6 +311,7 @@ export default class McpServer {
                 language: options.language,
                 allowSetState: options.allowSetState,
                 allowObjectChange: options.allowObjectChange,
+                setStateDestructive: options.setStateDestructive,
             },
             options.adapter,
             null,
@@ -831,7 +841,7 @@ export default class McpServer {
                     title: 'Set a state value',
                     annotations: {
                         readOnlyHint: false,
-                        destructiveHint: true,
+                        destructiveHint: this.config.setStateDestructive,
                         idempotentHint: true,
                         openWorldHint: false,
                     },
@@ -861,7 +871,7 @@ export default class McpServer {
                     title: 'Set multiple state values',
                     annotations: {
                         readOnlyHint: false,
-                        destructiveHint: true,
+                        destructiveHint: this.config.setStateDestructive,
                         idempotentHint: true,
                         openWorldHint: false,
                     },

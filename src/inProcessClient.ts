@@ -65,6 +65,12 @@ export interface InProcessMcpOptions {
      * pass `false` explicitly to expose the reading tools only.
      */
     allowSetState?: boolean;
+    /**
+     * Declare `set_state`/`set_states` as destructive (`destructiveHint`) (default: **true**).
+     *
+     * Pass `false` to declare them as non-destructive writes; `readOnlyHint` stays `false` either way.
+     */
+    setStateDestructive?: boolean;
     /** Allow the object/file-changing tools (`create_state`, `set_object`, ...) (default: false). */
     allowObjectChange?: boolean;
     /** Name reported to the server by the embedded client. */
@@ -102,6 +108,7 @@ export async function createInProcessMcp(options: InProcessMcpOptions): Promise<
         language: options.language,
         allowSetState: options.allowSetState,
         allowObjectChange: options.allowObjectChange,
+        setStateDestructive: options.setStateDestructive,
     });
 
     const server = mcp.createInProcessServer();

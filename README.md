@@ -111,6 +111,10 @@ the ACLs the MCP client should have.
 ### Permissions
 - **Allow setting states**: Allow MCP clients to write state values (the `set_state` and `set_states` tools).
   Default: **on**.
+- **Mark setting states as destructive** (`setStateDestructive`): Declare `set_state` and `set_states` with
+  `destructiveHint: true`, so MCP clients can warn before a state is written. Default: **on**. When off, both tools
+  are declared as non-destructive writes (`readOnlyHint` stays `false`); whether a client still asks for
+  confirmation then depends on the client.
 - **Allow object/file changes**: Allow MCP clients to create/modify/delete objects and files (the `set_object`,
   `delete_object`, `create_state`, `create_scene`, `write_file`, `delete_file`, `rename_file` and `mkdir`
   tools). Default: **off**. When off, these tools are not exposed at all.
@@ -219,6 +223,9 @@ client calls it and its result is verified:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) New option `setStateDestructive` (default true): `set_state`/`set_states` can be declared as non-destructive writes
+
 ### 1.1.1 (2026-09-15)
 * (@GermanBluefox) No "MCP authentication is disabled" warning when the standalone server is bound to a loopback address (`127.0.0.1`, `::1`, `localhost`)
 

@@ -25,6 +25,8 @@ export interface McpConfig {
     secure: boolean;
     /** Allow the `set_state`/`set_states` tools to write states (default: true). */
     allowSetState: boolean;
+    /** Declare `set_state`/`set_states` as destructive (`destructiveHint`), so clients can warn before writing (default: true). */
+    setStateDestructive?: boolean;
     /** Allow the object/file changing tools (`set_object`, `delete_object`, `create_state`, `create_scene`, `write_file`, `delete_file`, `rename_file`, `mkdir`) (default: false). */
     allowObjectChange: boolean;
     certPublic: string;

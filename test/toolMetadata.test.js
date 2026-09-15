@@ -186,6 +186,26 @@ describe('tool metadata', () => {
         }
     });
 
+    it('declares the state-writing tools destructive by default', () => {
+        const byName = Object.fromEntries(tools.map(tool => [tool.name, tool]));
+        for (const name of STATE_WRITE_TOOLS) {
+            assert.equal(byName[name].annotations.destructiveHint, true, `${name} must be destructive by default`);
+        }
+    });
+
+    it('declares the state-writing tools non-destructive when setStateDestructive is off', async () => {
+        const { mcp: relaxed } = await startMcp({ setStateDestructive: false });
+        try {
+            const byName = Object.fromEntries((await relaxed.listTools()).map(tool => [tool.name, tool]));
+            for (const name of STATE_WRITE_TOOLS) {
+                assert.equal(byName[name].annotations.destructiveHint, false, `${name} must not be destructive`);
+                assert.equal(byName[name].annotations.readOnlyHint, false, `${name} still writes`);
+            }
+        } finally {
+            await relaxed.close();
+        }
+    });
+
     it('hides the object/file changing tools when allowObjectChange is off', async () => {
         const { mcp: limited } = await startMcp({ allowObjectChange: false });
         try {
