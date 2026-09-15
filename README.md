@@ -223,7 +223,7 @@ client calls it and its result is verified:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 1.1.2 (2026-09-15)
 * (@GermanBluefox) New option `setStateDestructive` (default true): `set_state`/`set_states` can be declared as non-destructive writes
 
 ### 1.1.1 (2026-09-15)
