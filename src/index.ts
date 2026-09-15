@@ -634,8 +634,12 @@ export default class McpServer {
         let transport = sessionId ? this.sessions[sessionId]?.transport : undefined;
 
         if (!transport) {
+            if (sessionId) {
+                this.sendSessionNotFound(res, sessionId);
+                return;
+            }
             // No session yet: only an "initialize" request may create one.
-            if (sessionId || !isInitializeRequest(req.body)) {
+            if (!isInitializeRequest(req.body)) {
                 res.status(400).json({
                     jsonrpc: '2.0',
                     error: { code: -32000, message: 'Bad Request: No valid session ID provided' },
@@ -675,10 +679,28 @@ export default class McpServer {
         const sessionId = req.headers['mcp-session-id'] as string | undefined;
         const transport = sessionId ? this.sessions[sessionId]?.transport : undefined;
         if (!transport) {
+            if (sessionId) {
+                this.sendSessionNotFound(res, sessionId);
+                return;
+            }
             res.status(400).send('Invalid or missing session ID');
             return;
         }
         await transport.handleRequest(req, res);
+    }
+
+    /**
+     * Answer a request of an unknown session, e.g. after a restart of the adapter or when the session was closed.
+     * The Streamable HTTP specification requires 404 here: only then the client starts a new session with
+     * "initialize". With 400 the client keeps using the dead session and every further request fails.
+     */
+    private sendSessionNotFound(res: Response, sessionId: string): void {
+        this.adapter.log.debug(`MCP session not found: ${sessionId}`);
+        res.status(404).json({
+            jsonrpc: '2.0',
+            error: { code: -32001, message: 'Session not found' },
+            id: null,
+        });
     }
 
     /**

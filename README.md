@@ -128,7 +128,9 @@ the ACLs the MCP client should have.
 ## MCP Endpoint
 
 The MCP server is served at `POST/GET/DELETE /mcp` using the Streamable HTTP transport with per-session
-state (tracked via the `Mcp-Session-Id` header). Point your MCP client at:
+state (tracked via the `Mcp-Session-Id` header). Sessions live in memory: requests with an unknown session ID
+(e.g. after a restart of the adapter) are answered with `404 Not Found`, so the client starts a new session.
+Point your MCP client at:
 
 - standalone: `http(s)://<host>:<port>/mcp`
 - web extension: `http(s)://<host>:<webPort>/mcp/`
@@ -223,6 +225,9 @@ client calls it and its result is verified:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) Requests with an unknown `Mcp-Session-Id` (e.g. after a restart) are answered with `404 Not Found` instead of `400`, so MCP clients start a new session as required by the Streamable HTTP specification
+
 ### 1.1.2 (2026-09-15)
 * (@GermanBluefox) New option `setStateDestructive` (default true): `set_state`/`set_states` can be declared as non-destructive writes
 
