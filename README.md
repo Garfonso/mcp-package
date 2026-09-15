@@ -219,7 +219,7 @@ client calls it and its result is verified:
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 1.1.1 (2026-09-15)
 * (@GermanBluefox) No "MCP authentication is disabled" warning when the standalone server is bound to a loopback address (`127.0.0.1`, `::1`, `localhost`)
 
 ### 1.1.0 (2026-09-11)
