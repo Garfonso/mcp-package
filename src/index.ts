@@ -53,6 +53,23 @@ const AGG_MAP: Record<string, ioBroker.GetHistoryOptions['aggregate']> = {
 };
 const WEB_EXTENSION_PREFIX = 'mcp/';
 
+const LOOPBACK = new net.BlockList();
+LOOPBACK.addSubnet('127.0.0.0', 8, 'ipv4');
+LOOPBACK.addAddress('::1', 'ipv6');
+
+/** True when the bind address only accepts connections from this machine (127.0.0.0/8, ::1, localhost). */
+function isLoopbackBind(bind: string | undefined): boolean {
+    const address = (bind || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^\[(.*)]$/, '$1');
+    if (address === 'localhost') {
+        return true;
+    }
+    const family = net.isIP(address);
+    return !!family && LOOPBACK.check(address, family === 4 ? 'ipv4' : 'ipv6');
+}
+
 /** Languages offered for localized names. */
 const LANGUAGES = ['en', 'de', 'ru', 'pt', 'nl', 'fr', 'it', 'es', 'pl', 'uk', 'zh-cn'] as const;
 
@@ -373,7 +390,8 @@ export default class McpServer {
                     'MCP OAuth is enabled: clients can connect through a browser login at /oauth/authorize',
                 );
             }
-        } else if (!this.extension && !this.config.auth) {
+        } else if (!this.extension && !this.config.auth && !isLoopbackBind(this.config.bind)) {
+            // Bound to a loopback address, the endpoint is unreachable from the network, so skip the warning
             this.adapter.log.warn(
                 'MCP authentication is disabled: the MCP endpoint is reachable without credentials. ' +
                     'Enable "Authentication" in the adapter settings when the port is exposed to untrusted networks.',
