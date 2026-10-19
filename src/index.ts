@@ -1375,14 +1375,21 @@ export default class McpServer {
                         'provided common/native; a missing one is created from the provided object.',
                     inputSchema: {
                         id: z.string().describe('Object ID'),
+                        // Deliberately `looseObject` and not `record`: the MCP SDK converts the tool
+                        // schemas with the zod copy of its own dependency tree, which is not
+                        // necessarily the one these schemas were built with. `record`'s JSON Schema
+                        // processor relies on a context field that only newer zod versions create,
+                        // so a split zod installation makes `tools/list` throw -32603 and the client
+                        // ends up with no tools at all. `looseObject` produces the same
+                        // `additionalProperties` schema and works across versions.
                         obj: z
-                            .record(z.string(), z.any())
+                            .looseObject({})
                             .describe('Partial object, e.g. { "type": "state", "common": {...}, "native": {...} }'),
                     },
                 },
                 async ({ id, obj }) => {
                     try {
-                        const result = await this.setObject(id, obj as Partial<ioBroker.Object>);
+                        const result = await this.setObject(id, obj);
                         return ok({ ok: true, data: result });
                     } catch (e) {
                         return fail(e);
